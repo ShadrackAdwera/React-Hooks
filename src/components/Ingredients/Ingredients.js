@@ -1,11 +1,28 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useReducer } from 'react';
 import IngredientForm from './IngredientForm';
 import Search from './Search';
 import IngredientList from './IngredientList';
 import ErrorModal from '../UI/ErrorModal'
 
+const ingredientReducer = (currentIngredients, action) => {
+  switch(action.type) {
+    case 'CREATE':
+      return [
+        ...currentIngredients,
+        action.ingredient
+      ]
+    case 'READ' :
+      return action.ingredients
+    case 'DELETE':
+      return currentIngredients.filter(ingrd=> ingrd.id !==action.id)
+    default:
+      throw new Error('FUCC OFF')  
+  }
+}
+
 const Ingredients = () => {
-  const [ingredients, setIngredients] = useState([]);
+  const [userIngredients, dispatch] = useReducer(ingredientReducer, [])
+  //const [ingredients, setIngredients] = useState([]);
   const [isLoading, setIsLoading] = useState(false)
   const [errorFetch, setErrorFetch] = useState()
 
@@ -25,7 +42,10 @@ const Ingredients = () => {
             amount: responseData[key].amount,
           });
         }
-        setIngredients(loadedIngredients);
+        //setIngredients(loadedIngredients);
+        dispatch({
+          type:'READ', ingredients: loadedIngredients
+        })
       }).catch(error=>{
         setErrorFetch(error.message)
       });
@@ -43,10 +63,11 @@ const Ingredients = () => {
         return response.json();
       })
       .then((responseData) => {
-        setIngredients((prevIngredients) => [
-          ...prevIngredients,
-          { id: responseData.name, ...ingredient },
-        ]);
+        // setIngredients((prevIngredients) => [
+        //   ...prevIngredients,
+        //   { id: responseData.name, ...ingredient },
+        // ]);
+        dispatch({type:'CREATE', ingredient: { id: responseData.name, ...ingredient }})
       }).catch(error=>{
         setErrorFetch(true)
         setIsLoading(false)
@@ -62,9 +83,13 @@ const Ingredients = () => {
       }
     ).then((response) => {
       setIsLoading(false)
-      setIngredients((prevIngredients) =>
-        prevIngredients.filter((ingredient) => ingredient.id !== id)
-      );
+      // setIngredients((prevIngredients) =>
+      //   prevIngredients.filter((ingredient) => ingredient.id !== id)
+      // );
+      dispatch({
+        type:'DELETE',
+        id:id 
+      })
     }).catch(error=>{
       setIsLoading(false)
       setErrorFetch(error.message)
@@ -72,7 +97,10 @@ const Ingredients = () => {
   };
 
   const filteredIngredientsHandler = useCallback((filteredIngredient) => {
-    setIngredients(filteredIngredient);
+    //setIngredients(filteredIngredient);
+    dispatch({
+      type:'READ', ingredients: filteredIngredient
+    })
   }, []);
 
   const clearError = () => {
@@ -87,7 +115,7 @@ const Ingredients = () => {
       <section>
         <Search onLoadIngredients={filteredIngredientsHandler} />
         <IngredientList
-          ingredients={ingredients}
+          ingredients={userIngredients}
           onRemoveItem={removeIngredientHandler}
         />
       </section>
