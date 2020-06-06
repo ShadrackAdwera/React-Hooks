@@ -42,21 +42,28 @@ const Ingredients = () => {
   };
 
   const removeIngredientHandler = (id) => {
-    setIngredients((prevIngredients) =>
-      prevIngredients.filter((ingredient) => ingredient.id !== id)
-    );
+    fetch(
+      `https://react-hooks-demo-7a4ec.firebaseio.com/ingredients/${id}.json`,
+      {
+        method: 'DELETE',
+      }
+    ).then((response) => {
+      setIngredients((prevIngredients) =>
+        prevIngredients.filter((ingredient) => ingredient.id !== id)
+      );
+    });
   };
 
-  const filteredIngredientsHandler = useCallback(filteredIngredient => {
-    setIngredients(filteredIngredient)
-  }, [])
+  const filteredIngredientsHandler = useCallback((filteredIngredient) => {
+    setIngredients(filteredIngredient);
+  }, []);
 
   return (
     <div className="App">
       <IngredientForm onAddIngredient={addIngredientHandler} />
 
       <section>
-        <Search onLoadIngredients={filteredIngredientsHandler}/>
+        <Search onLoadIngredients={filteredIngredientsHandler} />
         <IngredientList
           ingredients={ingredients}
           onRemoveItem={removeIngredientHandler}
